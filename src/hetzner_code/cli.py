@@ -161,11 +161,20 @@ def status(name, json_output, reconcile):
     default=None,
     help="cd into this repo's directory on connect.",
 )
-def ssh(name, repo_name):
+@click.option(
+    "--forward",
+    "-L",
+    "forwards",
+    multiple=True,
+    help="Forward a local port to the box, repeatable. Accepts ssh's own "
+    "PORT:HOST:PORT syntax, or shorthand: 8000 (same port both ends), "
+    "8000:9000 (different remote port).",
+)
+def ssh(name, repo_name, forwards):
     """SSH into a tracked instance."""
     from hetzner_code.commands.ssh import ssh as _ssh
 
-    sys.exit(_ssh(instance_name=name, repo_name=repo_name))
+    sys.exit(_ssh(instance_name=name, repo_name=repo_name, forwards=forwards))
 
 
 def main() -> None:

@@ -7,7 +7,26 @@ from hetzner_code.config import REMOTE_CODE_DIR
 from hetzner_code.run import HcodeError
 
 
-def ssh(*, instance_name: str, repo_name: str | None) -> int:
+def normalize_forward(spec: str) -> str:
+    """Accept ssh's own `-L` syntax, plus shorthand:
+
+    - "8000"               -> "8000:localhost:8000"
+    - "8000:9000"           -> "8000:localhost:9000"  (different remote port)
+    - "8000:localhost:9000" -> unchanged (full form, any remote host)
+    """
+    parts = spec.split(":")
+    if len(parts) == 1:
+        return f"{parts[0]}:localhost:{parts[0]}"
+    if len(parts) == 2:
+        return f"{parts[0]}:localhost:{parts[1]}"
+    if len(parts) == 3:
+        return spec
+    raise HcodeError(
+        f"--forward {spec!r} doesn't look like PORT, PORT:PORT, or PORT:HOST:PORT"
+    )
+
+
+def ssh(*, instance_name: str, repo_name: str | None, forwards: tuple[str, ...]) -> int:
     instance = state.load(instance_name)
     cwd = None
     if repo_name:
@@ -19,4 +38,8 @@ def ssh(*, instance_name: str, repo_name: str | None) -> int:
         cwd = f"{REMOTE_CODE_DIR}/{repo_name}"
     elif len(instance.repos) == 1:
         cwd = f"{REMOTE_CODE_DIR}/{instance.repos[0].name}"
-    return ssh_util.interactive(instance.ip, Path(instance.login_key_path), cwd=cwd)
+
+    normalized = [normalize_forward(f) for f in forwards]
+    return ssh_util.interactive(
+        instance.ip, Path(instance.login_key_path), cwd=cwd, forwards=normalized
+    )

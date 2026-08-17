@@ -102,9 +102,18 @@ def copy_to(ip: str, local_path: Path, remote_path: str, identity_path: Path) ->
         raise HcodeError(f"scp to {ip}:{remote_path} failed\n{result.stderr.strip()}")
 
 
-def interactive(ip: str, identity_path: Path, *, cwd: str | None = None) -> int:
+def interactive(
+    ip: str,
+    identity_path: Path,
+    *,
+    cwd: str | None = None,
+    forwards: list[str] | None = None,
+) -> int:
     """Interactive session — inherits this process's tty."""
-    command = ["ssh", *_ssh_opts(identity_path), "-t", f"root@{ip}"]
+    command = ["ssh", *_ssh_opts(identity_path)]
+    for spec in forwards or []:
+        command += ["-L", spec]
+    command += ["-t", f"root@{ip}"]
     if cwd:
         command.append(f"cd {_shell_quote(cwd)} && exec bash -l")
     return subprocess.call(command)
