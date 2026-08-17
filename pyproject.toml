@@ -1,0 +1,24 @@
+[project]
+name = "hetzner-code"
+version = "0.1.0"
+description = "Spin up, share, and tear down disposable Hetzner boxes for Claude Code, wired to a git repo via a per-repo GitHub deploy key."
+readme = "README.md"
+authors = [
+    { name = "Dike Kalu", email = "dike@dikekalu.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.4.2",
+]
+
+[project.scripts]
+hcode = "hetzner_code.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.3",
+]
