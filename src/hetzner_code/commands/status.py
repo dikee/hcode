@@ -19,12 +19,17 @@ def _age(created_at: str) -> str:
     return f"{hours / 24:.1f}d"
 
 
+def _repo_str(repo: state.Repo) -> str:
+    base = f"{repo.owner}/{repo.name}@{repo.branch or 'default'}"
+    if repo.worktrees:
+        base += f" [{','.join(repo.worktrees)}]"
+    return base
+
+
 def _repos_str(instance: state.Instance) -> str:
     if not instance.repos:
         return "(none)"
-    return ", ".join(
-        f"{r.owner}/{r.name}@{r.branch or 'default'}" for r in instance.repos
-    )
+    return ", ".join(_repo_str(r) for r in instance.repos)
 
 
 def status(*, name: str | None, json_output: bool, reconcile: bool) -> None:
@@ -48,18 +53,25 @@ def _row(instance: state.Instance) -> dict:
         "type": instance.type,
         "location": instance.location,
         "age": _age(instance.created_at),
-        "repos": [
-            f"{r.owner}/{r.name}@{r.branch or 'default'}" for r in instance.repos
-        ],
+        "repos": [_repo_str(r) for r in instance.repos],
+        "ops_dir": instance.ops_dir,
     }
 
 
 def _print_table(instances: list[state.Instance]) -> None:
     rows = [
-        (i.name, i.ip, i.type, i.location, _age(i.created_at), _repos_str(i))
+        (
+            i.name,
+            i.ip,
+            i.type,
+            i.location,
+            _age(i.created_at),
+            _repos_str(i),
+            i.ops_dir or "-",
+        )
         for i in instances
     ]
-    headers = ("NAME", "IP", "TYPE", "LOCATION", "AGE", "REPOS")
+    headers = ("NAME", "IP", "TYPE", "LOCATION", "AGE", "REPOS", "OPS")
     widths = [
         max(len(headers[c]), max(len(r[c]) for r in rows)) for c in range(len(headers))
     ]

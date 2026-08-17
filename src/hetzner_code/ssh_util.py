@@ -102,6 +102,47 @@ def copy_to(ip: str, local_path: Path, remote_path: str, identity_path: Path) ->
         raise HcodeError(f"scp to {ip}:{remote_path} failed\n{result.stderr.strip()}")
 
 
+def copy_dir_to(ip: str, local_dir: Path, remote_dir: str, identity_path: Path) -> None:
+    """Like copy_to but recursive — for a whole directory (the ops
+    folder), not a single file."""
+    run_remote(ip, f"mkdir -p {_shell_quote(_dirname(remote_dir))}", identity_path)
+    result = subprocess.run(
+        [
+            "scp",
+            "-r",
+            *_ssh_opts(identity_path),
+            str(local_dir),
+            f"root@{ip}:{remote_dir}",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise HcodeError(f"scp -r to {ip}:{remote_dir} failed\n{result.stderr.strip()}")
+
+
+def copy_from(ip: str, remote_path: str, local_path: Path, identity_path: Path) -> None:
+    """Pull a file or directory back down. -r is harmless on a plain
+    file, so one code path covers both without an extra round trip to
+    ask the box which kind remote_path is."""
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        [
+            "scp",
+            "-r",
+            *_ssh_opts(identity_path),
+            f"root@{ip}:{remote_path}",
+            str(local_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise HcodeError(f"scp from {ip}:{remote_path} failed\n{result.stderr.strip()}")
+
+
 def interactive(
     ip: str,
     identity_path: Path,

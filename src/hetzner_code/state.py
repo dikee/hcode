@@ -23,6 +23,7 @@ class Repo:
     branch: str | None
     deploy_key_id: str  # GitHub's numeric id for this deploy key, for delete
     deploy_key_title: str
+    worktrees: list[str] = field(default_factory=list)  # labels: "cc2", "cc3", ...
 
 
 @dataclass
@@ -40,6 +41,7 @@ class Instance:
         str  # ISO 8601, set by the caller (Date.now() equivalents forbidden here)
     )
     repos: list[Repo] = field(default_factory=list)
+    ops_dir: str | None = None  # remote path, if --ops-dir was copied up at create
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), indent=2)

@@ -53,3 +53,11 @@ def clone_repo_command(
         f"git -C {dest} config core.sshCommand "
         f"'ssh -i {key_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'"
     )
+
+
+def add_worktree_command(*, main_dest: str, worktree_dest: str, branch: str) -> str:
+    """A new worktree of an already-cloned repo, on a fresh branch off
+    whatever the main clone's HEAD currently is. Worktrees share the
+    main clone's `.git` — and therefore its `core.sshCommand` — so no
+    separate key setup is needed here."""
+    return f"git -C {main_dest} worktree add {worktree_dest} -b {branch} HEAD"
