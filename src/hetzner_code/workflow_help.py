@@ -18,17 +18,22 @@ coordination.
        --worktrees 3 \\
        --ops-dir ~/code/REPO_ops \\
        --post-clone bin/bootstrap_cloud_box.sh \\
+       --post-worktree bin/bootstrap_cloud_box.sh \\
        -L 8000 -L 5173
 
    Clones REPO into /root/code/REPO, adds REPO-cc2/REPO-cc3/REPO-cc4
-   worktrees on their own cc2/base, cc3/base, cc4/base branches, copies
-   backend/.env and the ops folder up, runs REPO's own bin/bootstrap_
-   cloud_box.sh (whatever a fresh box needs — installing a database
-   server, running migrations — that's the repo's business, not hcode's,
-   so it's a script the repo owns), then SSHes you into the main clone
-   with localhost:8000/:5173 already tunneled. That first terminal is
-   your orchestrator lane. --post-clone and -L are both optional — skip
-   either if the repo needs no setup or you'd rather tunnel later.
+   worktrees on their own cc2/base, cc3/base, cc4/base branches — each
+   also gets its own copy of --env-file (worktrees don't inherit
+   untracked files just by existing), copies the ops folder up, runs
+   REPO's own bin/bootstrap_cloud_box.sh once for the main clone and
+   once per worktree (whatever a fresh box or a fresh lane needs —
+   installing a database server, provisioning a *per-lane* database,
+   running migrations — that's the repo's business, not hcode's, so
+   it's a script the repo owns; HCODE_WORKTREE_LABEL in its environment
+   tells it which case it's in), then SSHes you into the main clone with
+   localhost:8000/:5173 already tunneled. That first terminal is your
+   orchestrator lane. --post-clone, --post-worktree, and -L are all
+   optional — skip whichever the repo doesn't need.
 
 2. Log into Claude Code in that terminal:
 

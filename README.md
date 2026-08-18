@@ -44,8 +44,9 @@ hcode workflow-help                      print the workflow below
 ```
 
 `create` additionally takes `--worktrees N`, `--ops-dir <local-path>`,
-`--post-clone <script>`, and `-L`/`--forward` (repeatable) — see Workflow
-below. Run `hcode <command> --help` for the full flag list on any of these.
+`--post-clone <script>`, `--post-worktree <script>`, and `-L`/`--forward`
+(repeatable) — see Workflow below. Run `hcode <command> --help` for the
+full flag list on any of these.
 
 ## Workflow
 
@@ -63,18 +64,23 @@ hcode create git@github.com:OWNER/REPO.git \
   --worktrees 3 \
   --ops-dir ~/code/REPO_ops \
   --post-clone bin/bootstrap_cloud_box.sh \
+  --post-worktree bin/bootstrap_cloud_box.sh \
   -L 8000 -L 5173
 ```
 
 Clones `REPO` into `/root/code/REPO`, adds `REPO-cc2`/`REPO-cc3`/`REPO-cc4`
-worktrees on their own `cc2/base`, `cc3/base`, `cc4/base` branches, copies
-`backend/.env` and the ops folder up, runs `REPO`'s own
-`bin/bootstrap_cloud_box.sh` (whatever a fresh box needs — installing a
-database server, running migrations — that's the repo's business, not
-`hcode`'s, so it's a script the repo owns), then SSHes you into the main
-clone with `localhost:8000`/`:5173` already tunneled. That first terminal
-is your orchestrator lane. `--post-clone` and `-L` are both optional —
-skip either if the repo needs no setup or you'd rather tunnel later.
+worktrees on their own `cc2/base`, `cc3/base`, `cc4/base` branches — each
+also gets its own copy of `--env-file` (worktrees don't inherit untracked
+files just by existing), copies the ops folder up, runs `REPO`'s own
+`bin/bootstrap_cloud_box.sh` once for the main clone and once per
+worktree (whatever a fresh box or a fresh lane needs — installing a
+database server, provisioning a *per-lane* database, running migrations
+— that's the repo's business, not `hcode`'s, so it's a script the repo
+owns; `HCODE_WORKTREE_LABEL` in its environment tells it which case it's
+in), then SSHes you into the main clone with `localhost:8000`/`:5173`
+already tunneled. That first terminal is your orchestrator lane.
+`--post-clone`, `--post-worktree`, and `-L` are all optional — skip
+whichever the repo doesn't need.
 
 **2. Log into Claude Code** in that terminal: `claude`
 
@@ -169,12 +175,16 @@ commits that were never pushed, and names them explicitly instead of a
 generic "destroy this box?" — `--yes` still skips the prompt, but the
 warning still prints either way.
 
-**`--post-clone` runs a script the repo owns, not one `hcode` writes.**
-`hcode` doesn't know whether a given repo needs Postgres, a specific
-`make` target, or nothing at all — that's project-specific knowledge that
-belongs in the repo itself (e.g. `bin/bootstrap_cloud_box.sh`), the same
-way `Makefile` targets already are. `hcode` just runs whatever's named,
-once, after cloning.
+**`--post-clone`/`--post-worktree` run a script the repo owns, not one
+`hcode` writes.** `hcode` doesn't know whether a given repo needs
+Postgres, a specific `make` target, or nothing at all — that's
+project-specific knowledge that belongs in the repo itself (e.g.
+`bin/bootstrap_cloud_box.sh`), the same way `Makefile` targets already
+are. `hcode` just runs whatever's named — once after cloning, and once
+more per worktree with `HCODE_WORKTREE_LABEL` set, since a worktree
+often needs something the main clone doesn't (its own database, most
+commonly — four lanes sharing one database is exactly the collision a
+multi-lane setup exists to avoid).
 
 ## Sizing
 
@@ -201,10 +211,16 @@ neighbors are exactly wrong for that workload.
    copy.
 6. If `--worktrees N` was given, adds `N` more worktrees on fresh
    `cc<n>/base` branches, sharing the main clone's `.git` (and therefore
-   its `core.sshCommand` — no separate key needed per worktree).
+   its `core.sshCommand` — no separate key needed per worktree). Copies
+   every `--env-file` into each one too — worktrees share tracked git
+   content, never untracked files, so a `.env` in the main clone doesn't
+   just appear in a new worktree on its own. If `--post-worktree` was
+   given, runs it once per worktree afterward, with `HCODE_WORKTREE_LABEL`
+   (`cc2`, `cc3`, ...) set so the script can do lane-specific setup.
 7. If `--ops-dir` was given, copies it up as a sibling of the repo and
    its worktrees — never inside any single one of them.
 8. If `--post-clone` was given, runs that script (path relative to the
-   repo root) once, with output streamed live since it can take a while.
+   repo root) once against the main clone, with output streamed live
+   since it can take a while.
 9. Saves instance state, then SSHes you in with any `-L` forwards
    already active (unless `--no-attach`).

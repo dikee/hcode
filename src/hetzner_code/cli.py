@@ -72,6 +72,14 @@ def cli() -> None:
     "with output streamed live, since these can take a while.",
 )
 @click.option(
+    "--post-worktree",
+    default=None,
+    help="A script (path relative to each worktree's root) to run once per worktree, "
+    "after --env-files are copied into it. HCODE_WORKTREE_LABEL (cc2, cc3, ...) is "
+    "set in its environment, so the repo's own script can do lane-specific setup "
+    "(e.g. a per-lane database) that hcode has no business knowing about.",
+)
+@click.option(
     "--forward",
     "-L",
     "forwards",
@@ -97,6 +105,7 @@ def create(
     worktrees,
     ops_dir,
     post_clone,
+    post_worktree,
     forwards,
     no_attach,
 ):
@@ -115,6 +124,7 @@ def create(
         worktrees=worktrees,
         ops_dir=ops_dir,
         post_clone=post_clone,
+        post_worktree=post_worktree,
         forwards=forwards,
         no_attach=no_attach,
     )

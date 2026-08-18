@@ -27,6 +27,7 @@ def create(
     worktrees: int,
     ops_dir: str | None,
     post_clone: str | None,
+    post_worktree: str | None,
     forwards: tuple[str, ...],
     no_attach: bool,
 ) -> None:
@@ -108,6 +109,22 @@ def create(
             )
             repo_state.worktrees.append(label)
             click.echo(f"  {worktree_dest}  (branch {label}/base)")
+
+            for local in env_files:
+                local_path = Path(local)
+                remote_path = f"{worktree_dest}/{local_path.as_posix()}"
+                ssh_util.copy_to(ip, local_path, remote_path, identity_path)
+                click.echo(
+                    f"    + {local} (worktrees don't inherit untracked files on their own)"
+                )
+
+            if post_worktree:
+                click.echo(f"    running {post_worktree} for {label} ...")
+                ssh_util.run_remote_streaming(
+                    ip,
+                    f"cd {worktree_dest} && HCODE_WORKTREE_LABEL={label} bash {post_worktree}",
+                    identity_path,
+                )
     else:
         click.echo("[5/7] no --worktrees requested, skipping")
 
