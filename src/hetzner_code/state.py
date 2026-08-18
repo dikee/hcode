@@ -42,6 +42,9 @@ class Instance:
     )
     repos: list[Repo] = field(default_factory=list)
     ops_dir: str | None = None  # remote path, if --ops-dir was copied up at create
+    ops_dir_local: str | None = (
+        None  # its origin on your laptop — destroy syncs back here
+    )
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), indent=2)

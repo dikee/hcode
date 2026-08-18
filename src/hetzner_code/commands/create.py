@@ -122,6 +122,7 @@ def create(
         created_at=datetime.now(UTC).isoformat(),
         repos=[repo_state],
         ops_dir=remote_ops_dir,
+        ops_dir_local=str(resolved_ops_dir) if resolved_ops_dir else None,
     )
     state.save(instance)
 

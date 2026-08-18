@@ -143,6 +143,33 @@ def copy_from(ip: str, remote_path: str, local_path: Path, identity_path: Path) 
         raise HcodeError(f"scp from {ip}:{remote_path} failed\n{result.stderr.strip()}")
 
 
+def sync_dir_from(
+    ip: str, remote_dir: str, local_dir: Path, identity_path: Path
+) -> None:
+    """Pull remote_dir's *contents* into local_dir, which is expected to
+    already exist (it's --ops-dir's origin). The trailing `/.` on the
+    remote side is the standard scp idiom for "copy contents into an
+    existing directory" — without it, scp would nest remote_dir as a
+    new subdirectory inside local_dir instead of merging into it."""
+    local_dir.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        [
+            "scp",
+            "-r",
+            *_ssh_opts(identity_path),
+            f"root@{ip}:{remote_dir}/.",
+            str(local_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise HcodeError(
+            f"scp from {ip}:{remote_dir}/. failed\n{result.stderr.strip()}"
+        )
+
+
 def interactive(
     ip: str,
     identity_path: Path,
