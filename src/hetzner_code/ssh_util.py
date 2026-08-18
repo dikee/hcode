@@ -90,6 +90,19 @@ def run_remote(
     return result
 
 
+def run_remote_streaming(ip: str, command: str, identity_path: Path) -> None:
+    """Like run_remote, but inherits this process's stdout/stderr instead
+    of capturing it — for a repo's own --post-clone script, which can run
+    apt-get/make for a while and shouldn't look like create has hung."""
+    returncode = subprocess.call(
+        ["ssh", *_ssh_opts(identity_path), f"root@{ip}", command]
+    )
+    if returncode != 0:
+        raise HcodeError(
+            f"remote command failed on {ip} (exit {returncode}): {command}"
+        )
+
+
 def copy_to(ip: str, local_path: Path, remote_path: str, identity_path: Path) -> None:
     run_remote(ip, f"mkdir -p {_shell_quote(_dirname(remote_path))}", identity_path)
     result = subprocess.run(

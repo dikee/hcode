@@ -26,6 +26,7 @@ def create(
     env_files: tuple[str, ...],
     worktrees: int,
     ops_dir: str | None,
+    post_clone: str | None,
     forwards: tuple[str, ...],
     no_attach: bool,
 ) -> None:
@@ -55,11 +56,11 @@ def create(
             raise HcodeError(f"--ops-dir {resolved_ops_dir} isn't a directory")
 
     click.echo(
-        f"[1/6] checking {identity_path} matches '{resolved_login_key}' on Hetzner ..."
+        f"[1/7] checking {identity_path} matches '{resolved_login_key}' on Hetzner ..."
     )
     hetzner.verify_login_key(resolved_login_key, identity_path)
 
-    click.echo(f"[2/6] creating {server_type} in {location} ({instance_name}) ...")
+    click.echo(f"[2/7] creating {server_type} in {location} ({instance_name}) ...")
     with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as f:
         f.write(BASE_PROVISION_SCRIPT)
         script_path = Path(f.name)
@@ -76,11 +77,11 @@ def create(
         script_path.unlink(missing_ok=True)
 
     click.echo(
-        f"[3/6] waiting for {ip} to finish booting (this installs Docker/Node/uv, ~1-2 min) ..."
+        f"[3/7] waiting for {ip} to finish booting (this installs Docker/Node/uv, ~1-2 min) ..."
     )
     ssh_util.wait_for_ssh(ip, identity_path)
 
-    click.echo("[4/6] attaching the repo ...")
+    click.echo("[4/7] attaching the repo ...")
     repo_state = attach.attach_repo(
         ip=ip,
         identity_path=identity_path,
@@ -91,7 +92,7 @@ def create(
     )
 
     if worktrees:
-        click.echo(f"[5/6] adding {worktrees} worktree(s) for parallel lanes ...")
+        click.echo(f"[5/7] adding {worktrees} worktree(s) for parallel lanes ...")
         main_dest = f"{REMOTE_CODE_DIR}/{repo.name}"
         for n in range(2, worktrees + 2):
             label = f"cc{n}"
@@ -108,15 +109,26 @@ def create(
             repo_state.worktrees.append(label)
             click.echo(f"  {worktree_dest}  (branch {label}/base)")
     else:
-        click.echo("[5/6] no --worktrees requested, skipping")
+        click.echo("[5/7] no --worktrees requested, skipping")
 
     if resolved_ops_dir:
         remote_ops_dir = f"{REMOTE_CODE_DIR}/{repo.name}_ops"
-        click.echo(f"[6/6] copying {resolved_ops_dir} -> {remote_ops_dir} ...")
+        click.echo(f"[6/7] copying {resolved_ops_dir} -> {remote_ops_dir} ...")
         ssh_util.copy_dir_to(ip, resolved_ops_dir, remote_ops_dir, identity_path)
     else:
         remote_ops_dir = None
-        click.echo("[6/6] no --ops-dir given, skipping")
+        click.echo("[6/7] no --ops-dir given, skipping")
+
+    if post_clone:
+        main_dest = f"{REMOTE_CODE_DIR}/{repo.name}"
+        click.echo(
+            f"[7/7] running {post_clone} (repo-defined setup — output below) ..."
+        )
+        ssh_util.run_remote_streaming(
+            ip, f"cd {main_dest} && bash {post_clone}", identity_path
+        )
+    else:
+        click.echo("[7/7] no --post-clone given, skipping")
 
     instance = state.Instance(
         name=instance_name,

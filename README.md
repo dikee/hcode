@@ -43,9 +43,9 @@ hcode pull <name> <remote-path> [local-path] [--repo NAME]
 hcode workflow-help                      print the workflow below
 ```
 
-`create` additionally takes `--worktrees N`, `--ops-dir <local-path>`, and
-`-L`/`--forward` (repeatable) — see Workflow below. Run `hcode <command>
---help` for the full flag list on any of these.
+`create` additionally takes `--worktrees N`, `--ops-dir <local-path>`,
+`--post-clone <script>`, and `-L`/`--forward` (repeatable) — see Workflow
+below. Run `hcode <command> --help` for the full flag list on any of these.
 
 ## Workflow
 
@@ -53,8 +53,8 @@ The multi-lane shape this was built for: one orchestrator lane plus N
 worker lanes, each in its own git worktree, sharing one ops folder for
 coordination. (`hcode workflow-help` prints this same walkthrough.)
 
-**1. Create the box** — main clone, worktrees, ops folder, secrets, a
-tunnel, one shot:
+**1. Create the box** — main clone, worktrees, ops folder, secrets, repo
+setup, a tunnel, one shot:
 
 ```sh
 hcode create git@github.com:OWNER/REPO.git \
@@ -62,15 +62,19 @@ hcode create git@github.com:OWNER/REPO.git \
   --env-file backend/.env \
   --worktrees 3 \
   --ops-dir ~/code/REPO_ops \
+  --post-clone bin/bootstrap_cloud_box.sh \
   -L 8000 -L 5173
 ```
 
 Clones `REPO` into `/root/code/REPO`, adds `REPO-cc2`/`REPO-cc3`/`REPO-cc4`
 worktrees on their own `cc2/base`, `cc3/base`, `cc4/base` branches, copies
-`backend/.env` and the ops folder up, then SSHes you into the main clone
-with `localhost:8000`/`:5173` already tunneled. That first terminal is
-your orchestrator lane. `-L` is optional here — add it at `create` if you
-want the tunnel up immediately, or open it later (see below).
+`backend/.env` and the ops folder up, runs `REPO`'s own
+`bin/bootstrap_cloud_box.sh` (whatever a fresh box needs — installing a
+database server, running migrations — that's the repo's business, not
+`hcode`'s, so it's a script the repo owns), then SSHes you into the main
+clone with `localhost:8000`/`:5173` already tunneled. That first terminal
+is your orchestrator lane. `--post-clone` and `-L` are both optional —
+skip either if the repo needs no setup or you'd rather tunnel later.
 
 **2. Log into Claude Code** in that terminal: `claude`
 
@@ -165,6 +169,13 @@ commits that were never pushed, and names them explicitly instead of a
 generic "destroy this box?" — `--yes` still skips the prompt, but the
 warning still prints either way.
 
+**`--post-clone` runs a script the repo owns, not one `hcode` writes.**
+`hcode` doesn't know whether a given repo needs Postgres, a specific
+`make` target, or nothing at all — that's project-specific knowledge that
+belongs in the repo itself (e.g. `bin/bootstrap_cloud_box.sh`), the same
+way `Makefile` targets already are. `hcode` just runs whatever's named,
+once, after cloning.
+
 ## Sizing
 
 `create --type` defaults to `ccx33` (8 dedicated vCPUs, 32GB) —
@@ -193,5 +204,7 @@ neighbors are exactly wrong for that workload.
    its `core.sshCommand` — no separate key needed per worktree).
 7. If `--ops-dir` was given, copies it up as a sibling of the repo and
    its worktrees — never inside any single one of them.
-8. Saves instance state, then SSHes you in with any `-L` forwards
+8. If `--post-clone` was given, runs that script (path relative to the
+   repo root) once, with output streamed live since it can take a while.
+9. Saves instance state, then SSHes you in with any `-L` forwards
    already active (unless `--no-attach`).

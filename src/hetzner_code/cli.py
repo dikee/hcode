@@ -64,6 +64,14 @@ def cli() -> None:
     "lane can see it.",
 )
 @click.option(
+    "--post-clone",
+    default=None,
+    help="A script inside the repo (path relative to its root, e.g. bin/bootstrap.sh) "
+    "to run once, after cloning — for repo-specific setup (installing a database "
+    "server, running migrations) that's the repo's business, not hcode's. Runs "
+    "with output streamed live, since these can take a while.",
+)
+@click.option(
     "--forward",
     "-L",
     "forwards",
@@ -88,6 +96,7 @@ def create(
     env_files,
     worktrees,
     ops_dir,
+    post_clone,
     forwards,
     no_attach,
 ):
@@ -105,6 +114,7 @@ def create(
         env_files=env_files,
         worktrees=worktrees,
         ops_dir=ops_dir,
+        post_clone=post_clone,
         forwards=forwards,
         no_attach=no_attach,
     )
