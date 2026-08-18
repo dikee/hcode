@@ -38,10 +38,77 @@ hcode add <git-ssh-url> --instance NAME  clone a second codebase onto an existin
 hcode remove <repo-name> --instance NAME remove one codebase, keep the box up
 hcode destroy <name> | --all             tear down a box and every deploy key on it
 hcode status [name] [--json] [--reconcile]
-hcode ssh <name> [--repo NAME]
+hcode ssh <name> [--repo NAME] [--worktree LABEL] [-L PORT ...]
+hcode pull <name> <remote-path> [local-path] [--repo NAME]
+hcode workflow-help                      print the workflow below
 ```
 
-Run `hcode <command> --help` for the full flag list.
+`create` additionally takes `--worktrees N`, `--ops-dir <local-path>`, and
+`-L`/`--forward` (repeatable) — see Workflow below. Run `hcode <command>
+--help` for the full flag list on any of these.
+
+## Workflow
+
+The multi-lane shape this was built for: one orchestrator lane plus N
+worker lanes, each in its own git worktree, sharing one ops folder for
+coordination. (`hcode workflow-help` prints this same walkthrough.)
+
+**1. Create the box** — main clone, worktrees, ops folder, secrets, a
+tunnel, one shot:
+
+```sh
+hcode create git@github.com:OWNER/REPO.git \
+  --login-key-path ~/.ssh/hetzner_ed25519 \
+  --env-file backend/.env \
+  --worktrees 3 \
+  --ops-dir ~/code/REPO_ops \
+  -L 8000 -L 5173
+```
+
+Clones `REPO` into `/root/code/REPO`, adds `REPO-cc2`/`REPO-cc3`/`REPO-cc4`
+worktrees on their own `cc2/base`, `cc3/base`, `cc4/base` branches, copies
+`backend/.env` and the ops folder up, then SSHes you into the main clone
+with `localhost:8000`/`:5173` already tunneled. That first terminal is
+your orchestrator lane. `-L` is optional here — add it at `create` if you
+want the tunnel up immediately, or open it later (see below).
+
+**2. Log into Claude Code** in that terminal: `claude`
+
+**3. Open one more terminal per worker lane**, landing directly in its
+own worktree — separate branch, separate working directory, no lane can
+clobber another's files:
+
+```sh
+hcode ssh <instance> --worktree cc2
+hcode ssh <instance> --worktree cc3
+hcode ssh <instance> --worktree cc4
+```
+
+`claude` in each.
+
+**4. Ask the orchestrator lane to write task prompts** — it has the ops
+folder to read and write (`ORCHESTRATOR_RULES.md`, `ORCH.md`, `task.md`/
+`results.md` mailboxes), since `--ops-dir` put it outside every worktree,
+visible to all of them at once. Copy the prompts into each worker
+terminal.
+
+**Along the way:**
+
+- **See the UI/API yourself** — already tunneled if you passed `-L` at
+  `create`. Otherwise, one dedicated terminal: `hcode ssh <instance> -L
+  8000 -L 5173`, then hit `localhost:8000`/`:5173` on your own laptop —
+  never the box's public IP.
+- **Visual QA** — Claude Code on the box drives Playwright headlessly
+  and reads its own screenshots with `Read` — no tunnel needed, it's
+  local to the box. Pull one down yourself with `hcode pull <instance>
+  <path> --repo REPO`.
+- **Check on things** — `hcode status`, or `hcode status --reconcile`
+  to also flag anything orphaned.
+
+**When you're done:** `hcode destroy <instance>` — pulls the ops folder
+back down to its original local path, warns you by name if any repo or
+worktree has uncommitted or unpushed work before you confirm, then
+deletes the box and every deploy key it held.
 
 ## Design choices, and why
 
@@ -82,6 +149,22 @@ second-guesses.** `add`/`remove` let you do it. Nothing stops you from
 oversubscribing the CPU — that tradeoff is on you to make per session,
 not something worth a flag.
 
+**The ops folder lives outside every worktree, on purpose.** A git
+worktree only ever shows you its own branch's checked-out files — a
+shared mailbox (`task.md`/`results.md` coordination) committed into the
+repo would be invisible across worktrees the moment more than one
+exists, silently breaking multi-lane coordination. `--ops-dir` copies a
+local directory up as a sibling of the repo and its worktrees instead,
+so every lane can see it. `destroy` pulls it back to its original local
+path before deleting anything — it's the only copy of everything the
+orchestrator wrote during the session, and nothing else syncs it back.
+
+**`destroy` warns before it's too late to matter.** Before the confirm
+prompt, it checks every repo and worktree for uncommitted changes or
+commits that were never pushed, and names them explicitly instead of a
+generic "destroy this box?" — `--yes` still skips the prompt, but the
+warning still prints either way.
+
 ## Sizing
 
 `create --type` defaults to `ccx33` (8 dedicated vCPUs, 32GB) —
@@ -92,15 +175,23 @@ neighbors are exactly wrong for that workload.
 
 ## What create actually does
 
-1. Parses `owner/repo` out of the SSH URL.
-2. Generates a fresh ed25519 keypair, registers the public half as a
-   read-write deploy key on the repo (`gh repo deploy-key add`).
+1. Verifies `--login-key-path` actually matches `--login-key` on
+   Hetzner — fails before spending any money if it doesn't.
+2. Parses `owner/repo` out of the SSH URL.
 3. `hcloud server create`s the box from a boot script that installs
    git, uv, Node, Docker, and the Claude Code CLI — no secrets in it.
 4. Waits for SSH, then for cloud-init to actually finish.
-5. Copies the private key up, clones the repo with it, and points the
-   clone's `core.sshCommand` at that key so future `git push`/`pull` on
-   the box keep working without extra setup.
-6. Copies any `--env-file`s to the same relative path in the clone.
-7. Forgets the local private key copy.
-8. Saves instance state, then SSHes you in (unless `--no-attach`).
+5. Generates a fresh ed25519 keypair, registers the public half as a
+   read-write deploy key on the repo (`gh repo deploy-key add`), copies
+   the private key up, clones the repo with it, and points the clone's
+   `core.sshCommand` at that key so future `git push`/`pull` on the box
+   keep working without extra setup. Copies any `--env-file`s to the
+   same relative path in the clone, then forgets the local private key
+   copy.
+6. If `--worktrees N` was given, adds `N` more worktrees on fresh
+   `cc<n>/base` branches, sharing the main clone's `.git` (and therefore
+   its `core.sshCommand` — no separate key needed per worktree).
+7. If `--ops-dir` was given, copies it up as a sibling of the repo and
+   its worktrees — never inside any single one of them.
+8. Saves instance state, then SSHes you in with any `-L` forwards
+   already active (unless `--no-attach`).

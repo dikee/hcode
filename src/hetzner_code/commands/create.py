@@ -8,6 +8,7 @@ import click
 
 from hetzner_code import attach, hetzner, ssh_util, state
 from hetzner_code.config import REMOTE_CODE_DIR
+from hetzner_code.forwards import normalize_forward
 from hetzner_code.naming import generate_instance_name
 from hetzner_code.provision import BASE_PROVISION_SCRIPT, add_worktree_command
 from hetzner_code.run import HcodeError
@@ -25,6 +26,7 @@ def create(
     env_files: tuple[str, ...],
     worktrees: int,
     ops_dir: str | None,
+    forwards: tuple[str, ...],
     no_attach: bool,
 ) -> None:
     from hetzner_code.github import parse_repo_url
@@ -34,6 +36,11 @@ def create(
     if state.exists(instance_name):
         raise HcodeError(
             f"instance '{instance_name}' already exists — pick another --name"
+        )
+
+    if forwards and no_attach:
+        click.echo(
+            "note: --forward has no effect with --no-attach — nothing stays open to tunnel through"
         )
 
     resolved_login_key = login_key or hetzner.pick_login_key()
@@ -134,4 +141,7 @@ def create(
     click.echo(f"  kill:   hcode destroy {instance_name}")
 
     if not no_attach:
-        ssh_util.interactive(ip, identity_path, cwd=f"{REMOTE_CODE_DIR}/{repo.name}")
+        normalized = [normalize_forward(f) for f in forwards]
+        ssh_util.interactive(
+            ip, identity_path, cwd=f"{REMOTE_CODE_DIR}/{repo.name}", forwards=normalized
+        )

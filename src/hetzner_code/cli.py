@@ -64,6 +64,15 @@ def cli() -> None:
     "lane can see it.",
 )
 @click.option(
+    "--forward",
+    "-L",
+    "forwards",
+    multiple=True,
+    help="Forward a local port to the box on the post-create SSH session, repeatable. "
+    "Accepts ssh's own PORT:HOST:PORT syntax, or shorthand: 8000 (same port both "
+    "ends), 8000:9000 (different remote port). No effect with --no-attach.",
+)
+@click.option(
     "--no-attach",
     is_flag=True,
     help="Don't SSH in after creation; just print connection info.",
@@ -79,6 +88,7 @@ def create(
     env_files,
     worktrees,
     ops_dir,
+    forwards,
     no_attach,
 ):
     """Create a box and clone REPO_URL onto it."""
@@ -95,6 +105,7 @@ def create(
         env_files=env_files,
         worktrees=worktrees,
         ops_dir=ops_dir,
+        forwards=forwards,
         no_attach=no_attach,
     )
 
@@ -227,6 +238,14 @@ def pull(name, remote_path, local_path, repo_name):
         local_path=local_path,
         repo_name=repo_name,
     )
+
+
+@cli.command()
+def workflow_help():
+    """Print the multi-lane orchestrator + worker-lane workflow."""
+    from hetzner_code.workflow_help import WORKFLOW_HELP
+
+    click.echo(WORKFLOW_HELP)
 
 
 def main() -> None:
