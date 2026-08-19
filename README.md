@@ -7,6 +7,7 @@ up for a session and tear down when you're done.
 
 ## Prerequisites
 
+- Go 1.25 or later
 - `hcloud` — authenticated (`hcloud context create ...`)
 - `gh` — authenticated with `repo` scope (`gh auth status`)
 - An SSH key already registered with Hetzner for *your own* login access —
@@ -26,9 +27,12 @@ up for a session and tear down when you're done.
 
 ```sh
 cd ~/code/hetzner-code
-uv sync
-uv tool install --editable .   # puts `hcode` on your PATH
+go install ./cmd/hcode
 ```
+
+This puts `hcode` in `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if
+`GOBIN` isn't set — add that directory to your `PATH` if it isn't
+already.
 
 ## Commands
 

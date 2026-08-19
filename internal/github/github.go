@@ -7,6 +7,7 @@ package github
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/dikee/hetzner-code/internal/run"
@@ -49,7 +50,12 @@ func ParseRepoURL(url string) (RepoRef, error) {
 }
 
 type deployKey struct {
-	ID    any    `json:"id"`
+	// gh emits a bare JSON number here. Decoding it as `any` would hit
+	// Go's default float64 conversion and mangle large ids into
+	// scientific notation (e.g. 160723208 -> "1.60723208e+08") —
+	// caught by a live end-to-end run, where the resulting delete call
+	// 404'd. int64 keeps it exact.
+	ID    int64  `json:"id"`
 	Title string `json:"title"`
 }
 
@@ -81,7 +87,7 @@ func AddDeployKey(repo RepoRef, publicKeyPath, title string, write bool) (string
 
 	for _, k := range keys {
 		if k.Title == title {
-			return fmt.Sprintf("%v", k.ID), nil
+			return strconv.FormatInt(k.ID, 10), nil
 		}
 	}
 	return "", run.Errorf(

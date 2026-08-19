@@ -12,7 +12,11 @@ each item: what it does, and why it is built in this order.
 - [x] `internal/run` — subprocess wrapper (`run.py`)
 - [x] `internal/state` — `Instance`/`Repo` structs, JSON round-trip (`state.py`)
 - [x] `internal/github` — repo URL parsing, deploy-key add/delete (`github.py`) —
-      `ParseRepoURL` unit-tested against the Python regex's exact case set
+      `ParseRepoURL` unit-tested against the Python regex's exact case set; the
+      live test below caught a real bug here (deploy-key id decoded as
+      `float64` and mangled into scientific notation, e.g.
+      `160723208` -> `"1.60723208e+08"`, which 404'd on delete) — fixed to
+      decode as `int64`, regression-tested
 - [x] `internal/keys` — keypair generation (`keys.py`)
 - [x] `internal/hetzner` — server create/delete/describe, login-key verify (`hetzner.py`)
 - [x] `internal/sshutil` — every remote call, `copy_dir_to`'s trailing-`/.` merge semantics preserved exactly (`ssh_util.py`)
@@ -24,14 +28,26 @@ each item: what it does, and why it is built in this order.
 - [x] `cmd/hcode` — `cobra` root + all 8 existing subcommands (`cli.py` + `commands/*.py`)
 - [x] `workflow-help` text ported verbatim (`workflow_help.py`) — diffed
       byte-for-byte against the Python CLI's own output
-- [ ] Full parity check: every flag, every error message, every behavior from
-      the README re-verified against the Go build, not assumed equivalent
-- [ ] Live re-run of the worktrees/ops-dir end-to-end test (create with
-      `--worktrees`/`--ops-dir`/`--post-clone`/`--post-worktree`, `pull`,
-      `destroy` with the merge-not-overwrite check) against a real box, Go
-      binary this time
-- [ ] Old Python package removed from the repo once the Go build passes the
-      above — no dual-maintenance period
+- [x] Full parity check: every flag and help string on every subcommand
+      diff-checked against the Python CLI's own `--help` output; error paths
+      (`status` on an untracked name, a malformed repo URL, a missing
+      required flag) spot-checked side by side. `--post-clone`/
+      `--post-worktree` weren't separately live-tested — they run a plain
+      shell command over the same `RunRemoteStreaming` path the worktree
+      step below already exercised
+- [x] Live re-run of the worktrees/ops-dir end-to-end test against a real
+      box, Go binary this time: `create --worktrees 2 --ops-dir` against
+      `dikee/inzu` (ccx23, nbg1) — main clone, both worktrees, and the
+      copied-up ops dir all confirmed present via `pull`; `destroy` pulled
+      the ops dir back with no nesting bug (files landed flat, not under a
+      spurious `inzu_ops/` subdirectory — the case the trailing `/.` in
+      `SyncDirFrom` exists to prevent) and cleaned up the server and deploy
+      key. Caught the deploy-key id bug above; re-run confirmed clean after
+      the fix
+- [x] Old Python package removed from the repo now that the Go build has
+      passed the above — `src/`, `pyproject.toml`, `uv.lock`,
+      `.python-version` deleted, `.gitignore` and the README's install
+      instructions updated for `go install`, no dual-maintenance period
 
 ## `hcode run` core pipeline
 
