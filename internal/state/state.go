@@ -1,5 +1,5 @@
 // Package state is local state: one JSON file per instance under
-// ~/.hetzner-code/instances/.
+// ~/.hcode/instances/.
 //
 // This is the only source of truth hcode trusts for "what did I
 // create." `status --reconcile` cross-checks it against hcloud/GitHub
@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/dikee/hetzner-code/internal/config"
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/config"
+	"github.com/dikee/hcode/internal/run"
 )
 
 // Repo is one codebase cloned onto an instance.

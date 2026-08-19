@@ -1,4 +1,4 @@
-# hetzner-code
+# hcode
 
 Disposable Hetzner boxes for running Claude Code, each wired to one or
 more git repos through a per-repo GitHub deploy key. Built to move heavy
@@ -26,7 +26,7 @@ up for a session and tear down when you're done.
 ## Install
 
 ```sh
-cd ~/code/hetzner-code
+cd ~/code/hcode
 go install ./cmd/hcode
 ```
 
@@ -152,7 +152,7 @@ is copied to the same relative path inside the cloned repo on the box.
 `hcode` never keeps its own copy.
 
 **Local state, not Hetzner labels, is the source of truth for what
-`hcode` manages** — `~/.hetzner-code/instances/<name>/meta.json`. Every
+`hcode` manages** — `~/.hcode/instances/<name>/meta.json`. Every
 box still carries an `hcode` label so `status --reconcile` can catch
 drift (a box that exists on Hetzner but isn't tracked locally, or a
 tracked instance whose box is already gone) — see that command's output

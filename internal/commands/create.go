@@ -6,16 +6,16 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dikee/hetzner-code/internal/attach"
-	"github.com/dikee/hetzner-code/internal/config"
-	"github.com/dikee/hetzner-code/internal/forwards"
-	"github.com/dikee/hetzner-code/internal/github"
-	"github.com/dikee/hetzner-code/internal/hetzner"
-	"github.com/dikee/hetzner-code/internal/naming"
-	"github.com/dikee/hetzner-code/internal/provision"
-	"github.com/dikee/hetzner-code/internal/run"
-	"github.com/dikee/hetzner-code/internal/sshutil"
-	"github.com/dikee/hetzner-code/internal/state"
+	"github.com/dikee/hcode/internal/attach"
+	"github.com/dikee/hcode/internal/config"
+	"github.com/dikee/hcode/internal/forwards"
+	"github.com/dikee/hcode/internal/github"
+	"github.com/dikee/hcode/internal/hetzner"
+	"github.com/dikee/hcode/internal/naming"
+	"github.com/dikee/hcode/internal/provision"
+	"github.com/dikee/hcode/internal/run"
+	"github.com/dikee/hcode/internal/sshutil"
+	"github.com/dikee/hcode/internal/state"
 )
 
 // CreateOptions are every flag `hcode create` accepts.

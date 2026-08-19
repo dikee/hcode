@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dikee/hetzner-code/internal/config"
-	"github.com/dikee/hetzner-code/internal/state"
+	"github.com/dikee/hcode/internal/config"
+	"github.com/dikee/hcode/internal/state"
 )
 
 func testInstance() state.Instance {

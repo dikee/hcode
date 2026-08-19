@@ -1,4 +1,4 @@
-module github.com/dikee/hetzner-code
+module github.com/dikee/hcode
 
 go 1.25.0
 

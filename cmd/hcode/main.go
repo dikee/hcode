@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/run"
 	"github.com/spf13/cobra"
 )
 

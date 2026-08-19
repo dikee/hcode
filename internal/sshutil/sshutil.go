@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/run"
 )
 
 func sshOpts(identityPath string) []string {

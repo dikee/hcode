@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dikee/hetzner-code/internal/config"
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/config"
+	"github.com/dikee/hcode/internal/run"
 )
 
 type sshKeyInfo struct {

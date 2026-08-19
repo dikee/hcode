@@ -6,7 +6,7 @@ package forwards
 import (
 	"strings"
 
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/run"
 )
 
 // NormalizeForward accepts ssh's own `-L` syntax, plus shorthand:

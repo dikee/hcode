@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/dikee/hetzner-code/internal/workflowhelp"
+	"github.com/dikee/hcode/internal/workflowhelp"
 	"github.com/spf13/cobra"
 )
 

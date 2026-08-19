@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/run"
 )
 
 // Generate creates a passwordless ed25519 keypair at

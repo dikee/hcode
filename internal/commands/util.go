@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dikee/hetzner-code/internal/run"
+	"github.com/dikee/hcode/internal/run"
 )
 
 // expandUser expands a leading "~" the way Python's Path.expanduser

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	StateDir     = filepath.Join(homeDir(), ".hetzner-code")
+	StateDir     = filepath.Join(homeDir(), ".hcode")
 	InstancesDir = filepath.Join(StateDir, "instances")
 )
 

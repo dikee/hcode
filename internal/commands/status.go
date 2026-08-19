@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dikee/hetzner-code/internal/hetzner"
-	"github.com/dikee/hetzner-code/internal/state"
+	"github.com/dikee/hcode/internal/hetzner"
+	"github.com/dikee/hcode/internal/state"
 )
 
 func age(createdAt string) string {

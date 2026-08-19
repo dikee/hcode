@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dikee/hetzner-code/internal/attach"
-	"github.com/dikee/hetzner-code/internal/github"
-	"github.com/dikee/hetzner-code/internal/run"
-	"github.com/dikee/hetzner-code/internal/state"
+	"github.com/dikee/hcode/internal/attach"
+	"github.com/dikee/hcode/internal/github"
+	"github.com/dikee/hcode/internal/run"
+	"github.com/dikee/hcode/internal/state"
 )
 
 // AddOptions are every flag `hcode add` accepts.

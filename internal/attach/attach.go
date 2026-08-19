@@ -8,14 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dikee/hetzner-code/internal/config"
-	"github.com/dikee/hetzner-code/internal/github"
-	"github.com/dikee/hetzner-code/internal/keys"
-	"github.com/dikee/hetzner-code/internal/naming"
-	"github.com/dikee/hetzner-code/internal/provision"
-	"github.com/dikee/hetzner-code/internal/run"
-	"github.com/dikee/hetzner-code/internal/sshutil"
-	"github.com/dikee/hetzner-code/internal/state"
+	"github.com/dikee/hcode/internal/config"
+	"github.com/dikee/hcode/internal/github"
+	"github.com/dikee/hcode/internal/keys"
+	"github.com/dikee/hcode/internal/naming"
+	"github.com/dikee/hcode/internal/provision"
+	"github.com/dikee/hcode/internal/run"
+	"github.com/dikee/hcode/internal/sshutil"
+	"github.com/dikee/hcode/internal/state"
 )
 
 // AttachRepo registers a fresh deploy key for repoURL, clones it onto

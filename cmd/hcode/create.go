@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/dikee/hetzner-code/internal/commands"
-	"github.com/dikee/hetzner-code/internal/config"
+	"github.com/dikee/hcode/internal/commands"
+	"github.com/dikee/hcode/internal/config"
 	"github.com/spf13/cobra"
 )
 

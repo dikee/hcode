@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dikee/hetzner-code/internal/config"
-	"github.com/dikee/hetzner-code/internal/github"
-	"github.com/dikee/hetzner-code/internal/run"
-	"github.com/dikee/hetzner-code/internal/sshutil"
-	"github.com/dikee/hetzner-code/internal/state"
+	"github.com/dikee/hcode/internal/config"
+	"github.com/dikee/hcode/internal/github"
+	"github.com/dikee/hcode/internal/run"
+	"github.com/dikee/hcode/internal/sshutil"
+	"github.com/dikee/hcode/internal/state"
 )
 
 // RemoveOptions are every flag `hcode remove` accepts.
