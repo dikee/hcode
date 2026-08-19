@@ -8,19 +8,22 @@ each item: what it does, and why it is built in this order.
 
 ## Port to Go (step 0 — finish before anything below starts)
 
-- [ ] `internal/config` — ported (`config.py`)
-- [ ] `internal/run` — subprocess wrapper (`run.py`)
-- [ ] `internal/state` — `Instance`/`Repo` structs, JSON round-trip (`state.py`)
-- [ ] `internal/github` — repo URL parsing, deploy-key add/delete (`github.py`)
-- [ ] `internal/keys` — keypair generation (`keys.py`)
-- [ ] `internal/hetzner` — server create/delete/describe, login-key verify (`hetzner.py`)
-- [ ] `internal/sshutil` — every remote call, `copy_dir_to`'s trailing-`/.` merge semantics preserved exactly (`ssh_util.py`)
-- [ ] `internal/provision` — base script, worktree-add command (`provision.py`)
-- [ ] `internal/forwards` — `-L` shorthand parsing (`forwards.py`)
-- [ ] `internal/naming` — instance/key-title generation (`naming.py`)
-- [ ] `internal/attach` — repo-attach shared logic (`attach.py`)
-- [ ] `cmd/hcode` — `cobra` root + all 8 existing subcommands (`cli.py` + `commands/*.py`)
-- [ ] `workflow-help` text ported verbatim (`workflow_help.py`)
+- [x] `internal/config` — ported (`config.py`)
+- [x] `internal/run` — subprocess wrapper (`run.py`)
+- [x] `internal/state` — `Instance`/`Repo` structs, JSON round-trip (`state.py`)
+- [x] `internal/github` — repo URL parsing, deploy-key add/delete (`github.py`) —
+      `ParseRepoURL` unit-tested against the Python regex's exact case set
+- [x] `internal/keys` — keypair generation (`keys.py`)
+- [x] `internal/hetzner` — server create/delete/describe, login-key verify (`hetzner.py`)
+- [x] `internal/sshutil` — every remote call, `copy_dir_to`'s trailing-`/.` merge semantics preserved exactly (`ssh_util.py`)
+- [x] `internal/provision` — base script, worktree-add command (`provision.py`)
+- [x] `internal/forwards` — `-L` shorthand parsing (`forwards.py`) — unit-tested
+      against the Python original's exact case set, including its `""` edge case
+- [x] `internal/naming` — instance/key-title generation (`naming.py`)
+- [x] `internal/attach` — repo-attach shared logic (`attach.py`)
+- [x] `cmd/hcode` — `cobra` root + all 8 existing subcommands (`cli.py` + `commands/*.py`)
+- [x] `workflow-help` text ported verbatim (`workflow_help.py`) — diffed
+      byte-for-byte against the Python CLI's own output
 - [ ] Full parity check: every flag, every error message, every behavior from
       the README re-verified against the Go build, not assumed equivalent
 - [ ] Live re-run of the worktrees/ops-dir end-to-end test (create with
