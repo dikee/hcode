@@ -123,8 +123,23 @@ func Create(opts CreateOptions) error {
 		return err
 	}
 
+	// Before any worktree, not after: --post-clone is where a repo installs
+	// what the whole box needs (a database server, a package manager), and
+	// --post-worktree is lane setup that builds on it. Running the lanes
+	// first means the first one fails on a machine that isn't set up yet.
+	if opts.PostClone != "" {
+		mainDest := fmt.Sprintf("%s/%s", config.RemoteCodeDir, repo.Name)
+		fmt.Printf("[5/7] running %s (repo-defined setup — output below) ...\n", opts.PostClone)
+		cmd := fmt.Sprintf("cd %s && bash %s", mainDest, opts.PostClone)
+		if err := sshutil.RunRemoteStreaming(ip, cmd, identityPath); err != nil {
+			return err
+		}
+	} else {
+		fmt.Println("[5/7] no --post-clone given, skipping")
+	}
+
 	if opts.Worktrees > 0 {
-		fmt.Printf("[5/7] adding %d worktree(s) for parallel lanes ...\n", opts.Worktrees)
+		fmt.Printf("[6/7] adding %d worktree(s) for parallel lanes ...\n", opts.Worktrees)
 		mainDest := fmt.Sprintf("%s/%s", config.RemoteCodeDir, repo.Name)
 		for n := 2; n < opts.Worktrees+2; n++ {
 			label := fmt.Sprintf("cc%d", n)
@@ -153,30 +168,19 @@ func Create(opts CreateOptions) error {
 			}
 		}
 	} else {
-		fmt.Println("[5/7] no --worktrees requested, skipping")
+		fmt.Println("[6/7] no --worktrees requested, skipping")
 	}
 
 	var remoteOpsDir *string
 	if resolvedOpsDir != "" {
 		remote := fmt.Sprintf("%s/%s_ops", config.RemoteCodeDir, repo.Name)
-		fmt.Printf("[6/7] copying %s -> %s ...\n", resolvedOpsDir, remote)
+		fmt.Printf("[7/7] copying %s -> %s ...\n", resolvedOpsDir, remote)
 		if err := sshutil.CopyDirTo(ip, resolvedOpsDir, remote, identityPath); err != nil {
 			return err
 		}
 		remoteOpsDir = &remote
 	} else {
-		fmt.Println("[6/7] no --ops-dir given, skipping")
-	}
-
-	if opts.PostClone != "" {
-		mainDest := fmt.Sprintf("%s/%s", config.RemoteCodeDir, repo.Name)
-		fmt.Printf("[7/7] running %s (repo-defined setup — output below) ...\n", opts.PostClone)
-		cmd := fmt.Sprintf("cd %s && bash %s", mainDest, opts.PostClone)
-		if err := sshutil.RunRemoteStreaming(ip, cmd, identityPath); err != nil {
-			return err
-		}
-	} else {
-		fmt.Println("[7/7] no --post-clone given, skipping")
+		fmt.Println("[7/7] no --ops-dir given, skipping")
 	}
 
 	var opsDirLocal *string

@@ -213,7 +213,13 @@ neighbors are exactly wrong for that workload.
    keep working without extra setup. Copies any `--env-file`s to the
    same relative path in the clone, then forgets the local private key
    copy.
-6. If `--worktrees N` was given, adds `N` more worktrees on fresh
+6. If `--post-clone` was given, runs that script (path relative to the
+   repo root) once against the main clone, with output streamed live
+   since it can take a while. This runs **before** any worktree, because
+   it is where a repo installs what the whole box needs — a database
+   server, a package manager — and `--post-worktree` is lane setup that
+   builds on it.
+7. If `--worktrees N` was given, adds `N` more worktrees on fresh
    `cc<n>/base` branches, sharing the main clone's `.git` (and therefore
    its `core.sshCommand` — no separate key needed per worktree). Copies
    every `--env-file` into each one too — worktrees share tracked git
@@ -221,10 +227,7 @@ neighbors are exactly wrong for that workload.
    just appear in a new worktree on its own. If `--post-worktree` was
    given, runs it once per worktree afterward, with `HCODE_WORKTREE_LABEL`
    (`cc2`, `cc3`, ...) set so the script can do lane-specific setup.
-7. If `--ops-dir` was given, copies it up as a sibling of the repo and
+8. If `--ops-dir` was given, copies it up as a sibling of the repo and
    its worktrees — never inside any single one of them.
-8. If `--post-clone` was given, runs that script (path relative to the
-   repo root) once against the main clone, with output streamed live
-   since it can take a while.
 9. Saves instance state, then SSHes you in with any `-L` forwards
    already active (unless `--no-attach`).
